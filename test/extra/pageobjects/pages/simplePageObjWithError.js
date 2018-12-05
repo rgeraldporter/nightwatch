@@ -1,10 +1,20 @@
-var testCommands = {
+const commonCommands = require('../commands/common-commands.js');
+
+const testCommands = {
+  ...commonCommands,
+
   testCommand: function () {
+    this.api.elements('css selector', '#weblogin', res => {
+      this.clearValue('#weblogin');
+      this.perform(function() {
+      });
+    });
+
     return this;
   }
 };
 
-module.exports = {
+const o = {
   url: 'http://localhost.com',
   elements: {
     loginAsString: '#weblogin',
@@ -31,10 +41,11 @@ module.exports = {
     propTest: {
       selector: '#propTest',
       props: function () {
-        var defaults = {};
+        const defaults = {};
         defaults[this.name] = this.selector + ' Value';
+
         return {
-          defaults: defaults
+          defaults
         };
       }
     }
@@ -47,3 +58,5 @@ module.exports = {
     };
   }
 };
+
+module.exports = o;

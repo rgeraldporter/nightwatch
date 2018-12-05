@@ -1,4 +1,5 @@
 const assert = require('assert');
+const path = require('path');
 const common = require('../../common.js');
 const MockServer = require('../../lib/mockserver.js');
 const Nightwatch = require('../../lib/nightwatch.js');
@@ -83,6 +84,54 @@ describe('test NightwatchIndex', function () {
     client.startSession().catch(err => done(err));
   });
 
+  it('test createSession on Selenium Grid with Firefox', function (done) {
+    MockServer.addMock({
+      url: '/wd/hub/session',
+
+      postdata: JSON.stringify({
+        desiredCapabilities: {
+          browserName: 'firefox',
+          acceptSslCerts: true,
+          platform: 'TEST'
+        }
+      }),
+
+      response: JSON.stringify({
+        platform: 'TEST',
+        value: {
+          sessionId: 'abc-123456',
+          capabilities: {
+            acceptInsecureCerts: true,
+            browserName: 'firefox',
+            browserVersion: '60.0.2'
+          }
+        }
+      }),
+      statusCode: 200,
+      method: 'POST'
+    }, true);
+
+    let client = Nightwatch.createClient({
+      desiredCapabilities: {
+        browserName: 'firefox',
+        platform: 'TEST'
+      },
+      silent: false,
+      output: true,
+      selenium: {
+        version2: false,
+        start_process: false
+      }
+    });
+
+    client.createSession()
+      .then(data => {
+        assert.equal(data.sessionId, 'abc-123456');
+        assert.equal(client.api.capabilities.browserName, 'firefox');
+        done();
+      })
+      .catch(err => done(err));
+  });
 
   it('testSetOptions', function () {
     let client = Nightwatch.createClient({
@@ -262,6 +311,32 @@ describe('test NightwatchIndex', function () {
       assert.ok(err.message.indexOf('Could not find device : iPhone 6') > 0);
       done();
     }).catch(err => done(err));
+  });
+
+  it('test runner API', function(done) {
+    const Nightwatch = common.require('index.js');
+    const CliRunner = common.require('runner/cli/cli.js');
+    const init = CliRunner.prototype.initTestSettings;
+    CliRunner.prototype.initTestSettings = function(opts = {}, baseSettings = null, argv = null, testEnv = null) {
+      assert.deepEqual(argv, {
+        config: path.resolve('./test/extra/nightwatch.json'),
+        verbose: true,
+        reporter: 'junit',
+        source: 'test.js',
+        _source: 'test.js'
+      });
+
+      init.call(this, opts, baseSettings, argv, testEnv);
+    };
+
+    Nightwatch.runner({
+      config: './test/extra/nightwatch.json',
+      verbose: true,
+      source: 'test.js'
+    }, function(err) {
+      CliRunner.prototype.initTestSettings = init;
+      done();
+    });
   });
 
 });

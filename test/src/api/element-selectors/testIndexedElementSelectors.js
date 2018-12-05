@@ -24,7 +24,7 @@ describe('test index in element selectors', function() {
   beforeEach(function (done) {
     nocks.cleanAll();
     Nightwatch.init({
-      page_objects_path: [path.join(__dirname, '../../../extra/pageobjects')]
+      page_objects_path: [path.join(__dirname, '../../../extra/pageobjects/pages')]
     }, done);
   });
 
@@ -99,12 +99,26 @@ describe('test index in element selectors', function() {
       .waitForElementPresent({selector: '.nock', index: 1}, 1, false, function callback(result) {
         assert.equal(result.value.length, 1, 'waitforPresent index has results');
         assert.equal(result.value[0].ELEMENT, '1', 'waitforPresent found element 1');
-      })
-      .waitForElementPresent({selector: '.nock', index: 999}, 1, false, function callback(result) {
-        assert.strictEqual(result.value, false, 'waitforPresent out of bounds index expected false');
       });
 
     Nightwatch.start(done);
+  });
+
+  it('calling waitForElementPresent(<various>, {index}) failure', function (done) {
+    nocks
+      .elementsFound();
+
+    Nightwatch.api()
+      .waitForElementPresent({selector: '.nock', index: 999}, 1, false, function callback(result) {
+        try {
+          assert.strictEqual(result.value, false, 'waitforPresent out of bounds index expected false');
+          done();
+        } catch (err) {
+          done(err);
+        }
+      });
+
+    Nightwatch.start();
   });
 
   it('using page elements with index', function (done) {
@@ -213,17 +227,14 @@ describe('test index in element selectors', function() {
     nocks.elementsFound();
 
     let api = Nightwatch.api();
-    api.globals.abortOnAssertionFailure = false;
-
     let expect = api.expect.element({selector: '.nock', index: 999}).to.be.present.before(1);
 
-    api.perform(function() {
+    Nightwatch.start(function(err) {
       assert.equal(expect.assertion.passed, false);
       assert.ok(expect.assertion.message.includes('element was not found'), -1);
-    });
-
-    Nightwatch.start(function(err) {
-      done(err || nocks.checkIfMocksDone());
+      assert.ok(err instanceof Error);
+      nocks.checkIfMocksDone();
+      done();
     });
   });
 
@@ -233,19 +244,18 @@ describe('test index in element selectors', function() {
       .elementsId(0, '#helpBtn', [{ELEMENT: '0'}]);
 
     let api = Nightwatch.api();
-    api.globals.abortOnAssertionFailure = false;
+    api.globals.abortOnAssertionFailure = true;
     let page = api.page.simplePageObj();
     let section = page.section.signUp;
 
     let expect = section.expect.element({selector: '@help', index: 999}).to.be.present.before(1);
 
-    api.perform(function() {
+    Nightwatch.start(function(err) {
       assert.equal(expect.assertion.passed, false);
       assert.ok(expect.assertion.message.includes('element was not found'), -1);
-    });
-
-    Nightwatch.start(function(err) {
-      done(err || nocks.checkIfMocksDone());
+      assert.ok(err instanceof Error);
+      nocks.checkIfMocksDone();
+      done();
     });
   });
 });

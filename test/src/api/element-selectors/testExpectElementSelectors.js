@@ -1,8 +1,10 @@
 const path = require('path');
 const assert = require('assert');
+const common = require('../../../common.js');
 const nocks = require('../../../lib/nockselements.js');
 const MockServer  = require('../../../lib/mockserver.js');
 const Nightwatch = require('../../../lib/nightwatch.js');
+const Logger = common.require('util/logger.js');
 
 describe('test expect element selectors', function() {
 
@@ -24,10 +26,9 @@ describe('test expect element selectors', function() {
   beforeEach(function (done) {
     nocks.cleanAll();
     Nightwatch.init({
-      page_objects_path: [path.join(__dirname, '../../../extra/pageobjects')]
+      page_objects_path: [path.join(__dirname, '../../../extra/pageobjects/pages')]
     }, done);
   });
-
 
   it('passing expect selectors', function (done) {
     nocks
@@ -67,16 +68,16 @@ describe('test expect element selectors', function() {
       .elementsByXpathError();
 
     let api = Nightwatch.api();
-    api.globals.abortOnAssertionFailure = false;
+    api.globals.abortOnAssertionFailure = true;
 
     let expect = api.expect.element({selector: '.nock', locateStrategy: 'xpath'}).to.be.present.before(1);
 
-    api.perform(function() {
+    Nightwatch.start(function(err) {
       assert.equal(expect.assertion.passed, false);
       assert.ok(expect.assertion.message.includes('element was not found'));
+      assert.ok(err instanceof Error);
+      done();
     });
-
-    Nightwatch.start(done);
   });
 
   it('unknown/invalid expect methods', function () {

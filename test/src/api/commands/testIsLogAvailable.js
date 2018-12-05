@@ -1,8 +1,12 @@
 const assert = require('assert');
 const MockServer  = require('../../../lib/mockserver.js');
 const CommandGlobals = require('../../../lib/globals/commands.js');
+const common = require('../../../common.js');
+const Logger = common.require('util/logger.js');
 
 describe('isLogAvailable', function() {
+  //Logger.enable();
+  //Logger.setOutputEnabled(true);
 
   before(function(done) {
     CommandGlobals.beforeEach.call(this, done);
@@ -32,11 +36,11 @@ describe('isLogAvailable', function() {
 
     this.client.api
       .isLogAvailable('unknown', function callback(result) {
-        assert.equal(typeof result === 'boolean', true);
+        assert.equal(typeof result, 'boolean');
         assert.equal(result, false);
       })
       .isLogAvailable('browser', function callback(result) {
-        assert.equal(typeof result === 'boolean', true);
+        assert.equal(typeof result, 'boolean');
         assert.equal(result, true);
       });
 
@@ -54,11 +58,13 @@ describe('isLogAvailable', function() {
       })
     });
 
-    this.client.api.isLogAvailable( 'unknown', function callback(result) {
+    Logger.setOutputEnabled(false);
+
+    this.client.api.isLogAvailable('unknown', function callback(result) {
       assert.equal(typeof result === 'boolean', true);
       assert.equal(result, false);
     })
-      .isLogAvailable( 'browser', function callback(result) {
+      .isLogAvailable('browser', function callback(result) {
         assert.equal(typeof result === 'boolean', true);
         assert.equal(result, false);
       });
